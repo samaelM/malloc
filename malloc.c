@@ -12,6 +12,7 @@
 
 #define DEBUG(str) printf("DEBUG: %s\n", str)
 #define ALIGN(size) (((size) + 15) & ~15)
+#define PAGESIZE sysconf(_SC_PAGE_SIZE)
 
 typedef struct t_pool {// add attribute for destructor so it can munmap when exiting program
 	size_t size;
@@ -38,16 +39,25 @@ static inline void *initPool(size_t size) {
 static inline void *insertHeader(pool_t pool, size_t header){
 	char *current = pool.data;
 	while (current < pool.data + pool.size) {
-		if (*(size_t *)current & 1 || *(size_t *)current < header) {
+		size_t size = (*(size_t *)current >> 3) << 3;
+		char flags = *(size_t *)current & 1;
+
+		if (flags || size < header) {
 			DEBUG("BLOCK SKIP");
-			current += *(size_t *)current;
+			printf("this block was %ld bytes long\n", size);
+			current += size;
+			if ((size) == 0)
+				return NULL;
 		}
 		else {
-			size_t spaceLeft = *(size_t *)current;
-			*(size_t *)current = header;
-			*(current + header) = spaceLeft - header;
+			size_t spaceLeft = size;
+			size = header | 1;
+			if (spaceLeft > header) {
+				*(size_t *)(current + header) = spaceLeft - header;
+				printf("next block is %ld bytes long\n", *(size_t *)(current + header));
+			}
 			DEBUG("found space");
-			return (current += 1);
+			return (current + sizeof(size_t));
 		}
 	}
 	DEBUG("not enough space in pool");
@@ -61,11 +71,12 @@ void *ft_malloc(size_t size) {
 		return (NULL);
 
 	size_t realSize = ALIGN(size + sizeof(size_t));
+	printf("attempting to allocate %ld bytes memory block.(real size=%ld)\n", size, realSize);
 	void *pointer = NULL;
-	if (realSize < 46) {//should change to something like 16 and add more pools for different sizes
+	if (realSize <= 128) {//should change to something like 16 and add more pools for different sizes
 		if (!tinyPool.size) {
-			tinyPool.size = 1000;
-			tinyPool.data = initPool(1000);//should take ptr to pool and size as arguments
+			tinyPool.size = PAGESIZE;
+			tinyPool.data = initPool(PAGESIZE);//should take ptr to pool and size as arguments
 		}
 		pointer = insertHeader(tinyPool, realSize);
 	}
