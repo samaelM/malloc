@@ -15,7 +15,7 @@
 
 typedef struct t_pool {// add attribute for destructor so it can munmap when exiting program
 	size_t size;
-	size_t *data;
+	char *data;
 }pool_t;
 
 static inline void *initPool(size_t size) {
@@ -31,18 +31,21 @@ static inline void *initPool(size_t size) {
 		DEBUG("MAP_FAILED");
 		return (NULL);
 	}
-	*(size_t *)memory = 0;
+	*(size_t *)memory = size;
 	return (memory);
 }
 
 static inline void *insertHeader(pool_t pool, size_t header){
-	size_t *current = pool.data;
+	char *current = pool.data;
 	while (current < pool.data + pool.size) {
-		if ((size_t)*current & 1 || (size_t)*current > header) {
-			current += *current;
+		if (*(size_t *)current & 1 || *(size_t *)current < header) {
+			DEBUG("BLOCK SKIP");
+			current += *(size_t *)current;
 		}
 		else {
-			*current = header;
+			size_t spaceLeft = *(size_t *)current;
+			*(size_t *)current = header;
+			*(current + header) = spaceLeft - header;
 			DEBUG("found space");
 			return (current += 1);
 		}
