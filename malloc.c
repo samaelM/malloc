@@ -12,13 +12,14 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#define DEBUG(str) printf("%sDEBUG: %s%s\n", YELLOW, WHITE, str)
+#define DEBUG(str) printf("%sDEBUG:%s %s\n", YELLOW, WHITE, str)
 #define ALIGN(size) (((size) + 15) & ~15)
 #define PAGESIZE sysconf(_SC_PAGE_SIZE)
 
 typedef struct t_pool {// add attribute for destructor so it can munmap when exiting program
     size_t size;
     char *data;
+    struct t_pool *next;
 }pool_t;
 
 static inline void *initPool(size_t size) {
@@ -50,8 +51,7 @@ static inline void *insertHeader(pool_t pool, size_t header){
             current += size;
             if ((size) == 0)
                 return NULL;
-        }
-        else {
+        } else {
             size_t spaceLeft = size;
             size = header | 1;
             if (spaceLeft > header) {
@@ -63,13 +63,13 @@ static inline void *insertHeader(pool_t pool, size_t header){
             return (current + sizeof(size_t));
         }
     }
-    DEBUG("not enough space in pool"); // 67
-    // "realloc" the pool to make more space
+    DEBUG("not enough space in pool");
+    // "realloc" the pool to make more space // 67
     return (NULL);
 }
+static pool_t tinyPool;
 
 void *ft_malloc(size_t size) {
-    static pool_t tinyPool;
     if (size == 0)
         return (NULL);
 
@@ -84,6 +84,29 @@ void *ft_malloc(size_t size) {
         }
         pointer = insertHeader(tinyPool, realSize);
     }
-    
+
     return (pointer);
+}
+
+void ft_free(void *ptr) {
+//     if (ptr > tinyPool.data && tinyPool.data + tinyPool.size) {
+//         void *current = ptr - sizeof(size_t);
+//     }
+//     ;
+    (void)ptr;
+}
+
+void ft_show_alloc_mem() {
+    printf("TINY : %p\n", &tinyPool);
+    char *current = tinyPool.data;
+    while (current < tinyPool.data + tinyPool.size) {
+        size_t size = (*(size_t *)current >> 3) << 3;
+        char flags = *(size_t *)current & 1;
+
+        if (flags) {
+            printf("%p - %p : %ld bytes\n", current + sizeof(size_t), current + size, size);
+            current += size;
+        } else
+            return;
+    }
 }
