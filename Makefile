@@ -5,14 +5,14 @@ endif
 NAME			:=	libft_malloc_$(HOSTTYPE).so
 CC				:=	clang
 AR				:=	ar rcs
-FLAGS			:=	-Werror -Wall -Wextra -g3 -c
+FLAGS			:=	-Werror -Wall -Wextra -g3 -c -Iinclude
+
+
+OBJS_DIR		:=	objs
 
 SRCS			:=	malloc.c \
-					free.c \
-					realloc.c \
-					show_alloc_mem.c\
 
-OBJS			:=	$(SRCS:%.c=%.o)
+OBJS			:=	$(OBJS_DIR)/$(SRCS:%.c=%.o)
 
 
 # RULES
@@ -20,21 +20,23 @@ all: $(NAME)
 
 $(NAME): $(OBJS)
 	$(CC) -shared -o $(NAME) $(OBJS)
-# 	$(AR) $(NAME) $(OBJS)
 
-%.o: %.c
+$(OBJS_DIR)/%.o: srcs/%.c
+	@mkdir -p $(OBJS_DIR)
 	$(CC) $(FLAGS) -fPIC $< -o $@
 
 clean:
-	rm $(OBJS)
+	rm -f $(NAME)
+	rm -f a.out
 
 fclean: clean
-	rm $(NAME)
+	rm -rf $(OBJS_DIR)
+	make -C libft/ fclean
 
 re: fclean all
 
 test: $(NAME)
 	make -C libft/
-	cc main.c -L. -lft_malloc_x86_64_Linux -Ilibft -l:libft/libft.a
+	cc main.c -L. -lft_malloc_x86_64_Linux -Ilibft -Iinclude -l:libft/libft.a
 
 .PHONY: all clean fclean re test

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <libft.h>
-#include "malloc.h"
+#include <ft_malloc.h>
 #include <curses.h>
 
 
