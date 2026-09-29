@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <libft.h>
 #include <ft_malloc.h>
 #include <curses.h>
 
@@ -12,22 +11,20 @@ int main() {
     char    hello[13]   = "hello World!";
     char    mael[12]    = "hello Mael!";
 
-    char    buffer[1024];
-
     printf(GREEN "ALLOCATION:\n" WHITE);
     {
 	    ptr1 = ft_malloc(sizeof(hello));
 	    if (!ptr1) {
-	    	printf("ptr1 (%s bytes): " RED "FAIL\n" WHITE, ft_itoa_buffer(buffer, sizeof(hello)));
+	    	printf("ptr1 (%ld bytes): " RED "FAIL\n" WHITE, sizeof(hello));
 	    	return (1);
 	    }
-        printf("ptr1 (%s bytes): " GREEN "OK\n", ft_itoa_buffer(buffer, sizeof(hello)));
+        printf("ptr1 (%ld bytes): " GREEN "OK\n", sizeof(hello));
 	    ptr2 = ft_malloc(sizeof(mael));
 	    if (!ptr2) {
-	    	printf("ptr2 (%s bytes): " RED "FAIL\n" WHITE, ft_itoa_buffer(buffer, sizeof(hello)));
+	    	printf("ptr2 (%ld bytes): " RED "FAIL\n" WHITE, sizeof(hello));
 	    	return (1);
 	    }
-        printf("ptr2 (%s bytes): " GREEN "OK\n", ft_itoa_buffer(buffer, sizeof(mael)));
+        printf("ptr2 (%ld bytes): " GREEN "OK\n", sizeof(mael));
     }
     printf(GREEN "TESTS PASSED\n\n" WHITE);
 
