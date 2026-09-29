@@ -17,7 +17,7 @@
 #define ALIGN(size) (((size) + 15) & ~15)
 #define PAGESIZE sysconf(_SC_PAGE_SIZE)
 
-typedef struct t_pool {// add attribute for destructor so it can munmap when exiting program
+typedef struct t_pool {
     size_t size;
     char *data;
     struct t_pool *next;
@@ -92,12 +92,21 @@ void *ft_malloc(size_t size) {
     size_t realSize = ALIGN(size + sizeof(size_t));
     void *pointer = NULL;
     if (realSize <= 128) {//should add more pools for different sizes
-        if (!tinyPool.size) {
-            DEBUG("new pool");
-            tinyPool.size = PAGESIZE;
-            tinyPool.data = initPool(PAGESIZE);//should take ptr to pool and size as arguments
+        int safeIndex = 0;
+        while (!pointer) {
+            safeIndex++;
+            if (safeIndex > 5) {
+                DEBUG("⚠️ AVORTING!");
+                return (NULL);
+            }
+
+            if (!tinyPool.size) {
+                DEBUG("new pool");
+                tinyPool.size = PAGESIZE;
+                tinyPool.data = initPool(PAGESIZE); // should take ptr to pool and size as arguments
+            }
+            pointer = insertHeader(tinyPool, realSize);
         }
-        pointer = insertHeader(tinyPool, realSize);
     }
 
     return (pointer);
@@ -110,7 +119,7 @@ void ft_free(void *ptr) {
 }
 
 void ft_show_alloc_mem() {
-    printf("TINY : %p\n", &tinyPool);
+    printf("TINY : %p\n", tinyPool.data);
     char *current = tinyPool.data;
     while (current < tinyPool.data + tinyPool.size) {
         size_t size = (*(size_t *)current >> 3) << 3;
