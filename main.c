@@ -62,6 +62,10 @@ int main() {
     printf(GREEN "MEMORY:\n" WHITE);
     {
         ft_show_alloc_mem();
+        ft_free(ptr1);
+        ft_show_alloc_mem();
+        char * ptr3 = ft_malloc(32);
+        ft_show_alloc_mem();
     }
 	return (0);
 }

@@ -43,13 +43,13 @@ static inline void *insertHeader(pool_t pool, size_t header){
     char *current = pool.data;
     while (current < pool.data + pool.size) {
         size_t size = (*(size_t *)current >> 3) << 3;
-        char flags = *(size_t *)current & 1;
+        char is_used = *(size_t *)current & 1;
 
-        if (flags || size < header) {
+        // If the block is used or the size available is too small.
+        if (is_used || size < header) {
             DEBUG("block skip");
-            // printf("this block was %ld bytes long\n", size);
             current += size;
-            if ((size) == 0)
+            if (size == 0) // if it's the last block?
                 return NULL;
         } else {
             size_t spaceLeft = size;
@@ -89,11 +89,9 @@ void *ft_malloc(size_t size) {
 }
 
 void ft_free(void *ptr) {
-//     if (ptr > tinyPool.data && tinyPool.data + tinyPool.size) {
-//         void *current = ptr - sizeof(size_t);
-//     }
-//     ;
-    (void)ptr;
+    *(size_t *)(ptr - sizeof(size_t))-=1;
+    // should merge unused blocks
+    // 
 }
 
 void ft_show_alloc_mem() {
@@ -101,12 +99,24 @@ void ft_show_alloc_mem() {
     char *current = tinyPool.data;
     while (current < tinyPool.data + tinyPool.size) {
         size_t size = (*(size_t *)current >> 3) << 3;
-        char flags = *(size_t *)current & 1;
+        char is_used = *(size_t *)current & 1;
 
-        if (flags) {
-            printf("%p - %p : %ld bytes\n", current + sizeof(size_t), current + size, size);
+        if (is_used) {
+            printf("%p - %p : %ld bytes (used)\n", current + sizeof(size_t), current + size, size);
             current += size;
-        } else
-            return;
+        } else {
+            if (size> 0) {
+                printf("%p - %p : %ld bytes (unused)\n", current + sizeof(size_t), current + size, size);
+                current += size;
+            } else
+                break;
+        }
     }
+    // print the memory as hex dump
+    // for (size_t i = 0; i < tinyPool.size; i++) {
+    //     if (i % 16 == 0)
+    //         printf("\n%p: ", tinyPool.data + i);
+    //     printf("%02x ", (unsigned char)tinyPool.data[i]);
+    // }
+    // printf("\n");
 }

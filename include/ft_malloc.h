@@ -8,7 +8,7 @@
 #define FLASH "\033[6m"
 #define RETURN "\033[2K\r"
 
-void free(void *ptr);
+void ft_free(void *ptr);
 void *ft_malloc(size_t size);
 void *realloc(void *ptr, size_t size);
 void ft_show_alloc_mem();
