@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <curses.h>
 
 #define DEBUG(str) printf("%sDEBUG:%s %s\n", YELLOW, WHITE, str)
 #define ALIGN(size) (((size) + 15) & ~15)
@@ -39,15 +40,31 @@ static inline void *initPool(size_t size) {
     return (memory);
 }
 
+void mergeBlocks(char *current) {
+    size_t size = (*(size_t *)current >> 3) << 3;
+    char *next = current + size;
+    bool is_used_next = *(size_t *)next & 1;
+    while (!is_used_next) {
+        size = (*(size_t *)next >> 3) << 3;
+        *(size_t *)current += size;
+        DEBUG("merged block");
+        next = next + size;
+        is_used_next = *(size_t *)next & 1;
+    }
+}
+
 static inline void *insertHeader(pool_t pool, size_t header){
     char *current = pool.data;
     while (current < pool.data + pool.size) {
+        bool is_used = *(size_t *)current & 1;
+        if (!is_used) {
+            mergeBlocks(current);
+        }
         size_t size = (*(size_t *)current >> 3) << 3;
-        char is_used = *(size_t *)current & 1;
 
         // If the block is used or the size available is too small.
         if (is_used || size < header) {
-            DEBUG("block skip");
+            DEBUG("block skip"); // 67
             current += size;
             if (size == 0) // if it's the last block?
                 return NULL;
@@ -56,7 +73,6 @@ static inline void *insertHeader(pool_t pool, size_t header){
             size = header | 1;
             if (spaceLeft > header) {
                 *(size_t *)(current + header) = spaceLeft - header;
-                // printf("next block is %ld bytes long\n", *(size_t *)(current + header));
             }
             *(size_t *)current = size;
             DEBUG("found space");
@@ -64,7 +80,7 @@ static inline void *insertHeader(pool_t pool, size_t header){
         }
     }
     DEBUG("not enough space in pool");
-    // "realloc" the pool to make more space // 67
+    // "realloc" the pool to make more space
     return (NULL);
 }
 static pool_t tinyPool;
@@ -74,9 +90,8 @@ void *ft_malloc(size_t size) {
         return (NULL);
 
     size_t realSize = ALIGN(size + sizeof(size_t));
-    // printf("%sattempting to allocate %ld bytes memory block.(real size=%ld)%s\n", RED, size, realSize, WHITE);
     void *pointer = NULL;
-    if (realSize <= 128) {//should change to something like 16 and add more pools for different sizes
+    if (realSize <= 128) {//should add more pools for different sizes
         if (!tinyPool.size) {
             DEBUG("new pool");
             tinyPool.size = PAGESIZE;
@@ -89,9 +104,9 @@ void *ft_malloc(size_t size) {
 }
 
 void ft_free(void *ptr) {
+    DEBUG("memory freed");
     *(size_t *)(ptr - sizeof(size_t))-=1;
-    // should merge unused blocks
-    // 
+    // if pool is empty, munmap it
 }
 
 void ft_show_alloc_mem() {
@@ -99,14 +114,14 @@ void ft_show_alloc_mem() {
     char *current = tinyPool.data;
     while (current < tinyPool.data + tinyPool.size) {
         size_t size = (*(size_t *)current >> 3) << 3;
-        char is_used = *(size_t *)current & 1;
+        bool is_used = *(size_t *)current & 1;
 
         if (is_used) {
-            printf("%p - %p : %ld bytes (used)\n", current + sizeof(size_t), current + size, size);
+            printf("%p - %p : %ld bytes (used)\n", current, current + size, size);
             current += size;
         } else {
             if (size> 0) {
-                printf("%p - %p : %ld bytes (unused)\n", current + sizeof(size_t), current + size, size);
+                printf("%p - %p : %ld bytes (unused)\n", current, current + size, size);
                 current += size;
             } else
                 break;
@@ -118,5 +133,5 @@ void ft_show_alloc_mem() {
     //         printf("\n%p: ", tinyPool.data + i);
     //     printf("%02x ", (unsigned char)tinyPool.data[i]);
     // }
-    // printf("\n");
+    printf("\n");
 }
