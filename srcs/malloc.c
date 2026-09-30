@@ -15,6 +15,9 @@
 
 #define DEBUG(str) printf("%sDEBUG:%s %s\n", YELLOW, WHITE, str)
 #define ALIGN(size) (((size) + 15) & ~15)
+#define GET_SIZE(ptr) ((*(size_t *)ptr >> 3) << 3)
+#define GET_FLAG(ptr) (*(size_t *)ptr & 1)
+#define GET_BLOCK(ptr) (ptr - sizeof(size_t))
 #define PAGESIZE sysconf(_SC_PAGE_SIZE)
 
 typedef struct t_pool {
@@ -44,11 +47,11 @@ static inline pool_t *initPool(size_t size) {
 }
 
 void mergeBlocks(char *current) {
-    size_t size = (*(size_t *)current >> 3) << 3;
+    size_t size = GET_SIZE(current);
     char *next = current + size;
-    bool is_used_next = *(size_t *)next & 1;
+    bool is_used_next = GET_FLAG(next);
     while (!is_used_next) {
-        size = (*(size_t *)next >> 3) << 3;
+        size = GET_SIZE(next);
         if (size == 0) { // if it's the last block?// remplacer par next == pool.data+pool.size
             // printf("last block?%p\n", next);
             return;
@@ -56,22 +59,22 @@ void mergeBlocks(char *current) {
         *(size_t *)current += size;
         DEBUG("merged block");
         next = next + size;
-        is_used_next = *(size_t *)next & 1;
+        is_used_next = GET_FLAG(next);
     }
 }
 
 static inline void *insertHeader(pool_t *pool, size_t header) {
-    if (!pool) return (NULL);
+    if (!pool) return (NULL); // 67
     char *current = pool->data;
     int safeIndex = 0;
-    while (current < pool->data + pool->size) { // 67
+    while (current < pool->data + pool->size) {
         safeIndex++;
         if (safeIndex > 5) return (DEBUG("merge safeIndex"),NULL);
-        bool is_used = *(size_t *)current & 1;
+        bool is_used = GET_FLAG(current);
         if (!is_used) {
             mergeBlocks(current);
         }
-        size_t size = (*(size_t *)current >> 3) << 3;
+        size_t size = GET_SIZE(current);
 
         // If the block is used or the size available is too small.
         if (is_used || size < header) {
@@ -156,14 +159,14 @@ void ft_free(void *ptr) {
     if (!ptr) return;
     DEBUG("memory freed");
     // get the memory block position (with header)
-    void *memoryBlock = ptr - sizeof(size_t);
+    void *memoryBlock = GET_BLOCK(ptr);
 
     // fliping the is_used flag
     *(size_t *)memoryBlock -= 1;
 
     // if pool page is empty, munmap it, and don't break the chain
 
-    // get the size of the block
+    // get the size of the block to get pool
     // size_t size = (*(size_t *)memoryBlock >> 3) << 3;
     // find the owner of the pointer
 
@@ -177,8 +180,8 @@ void printPool(pool_t *pool, char *name) {
         char *currentBlock = currentPool->data;
         printf(YELLOW "PAGE %d: %ld bytes\n" WHITE, pageIndex, currentPool->size);
         while (currentBlock < currentPool->data + currentPool->size) {
-            size_t size = (*(size_t *)currentBlock >> 3) << 3;
-            bool is_used = *(size_t *)currentBlock & 1;
+            size_t size = GET_SIZE(currentBlock);
+            bool is_used = GET_FLAG(currentBlock);
     
             if (is_used) {
                 printf("\t%p - %p : %ld bytes (used)\n", currentBlock, currentBlock + size, size);
