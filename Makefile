@@ -36,7 +36,6 @@ fclean: clean
 re: fclean all
 
 test: $(NAME)
-	make -C libft/
 	cc main.c -L. -lft_malloc_x86_64_Linux -Ilibft -Iinclude -l:libft/libft.a
 
 .PHONY: all clean fclean re test

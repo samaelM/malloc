@@ -19,13 +19,13 @@
 
 typedef struct t_pool {
     size_t size;
-    char *data;
     struct t_pool *next;
+    char data[];
 }pool_t;
 
-static inline void *initPool(size_t size) {
+static inline pool_t *initPool(size_t size) {
     size_t pageSize = sysconf(_SC_PAGE_SIZE);
-    void *memory = mmap(NULL,
+    pool_t *memory = mmap(NULL,
                         size,
                         PROT_READ | PROT_WRITE,
                         MAP_ANON | MAP_SHARED,
@@ -36,7 +36,11 @@ static inline void *initPool(size_t size) {
         DEBUG("MAP_FAILED");
         return (NULL);
     }
-    *(size_t *)memory = size;
+    memory->size = size - sizeof(size_t) - sizeof(pool_t *);
+    printf("final pool size=%ld\n", memory->size);
+    memory->next = NULL;
+    //
+    *(size_t *)memory->data = size;
     return (memory);
 }
 
@@ -46,6 +50,10 @@ void mergeBlocks(char *current) {
     bool is_used_next = *(size_t *)next & 1;
     while (!is_used_next) {
         size = (*(size_t *)next >> 3) << 3;
+        if (size == 0) { // if it's the last block?// remplacer par next == pool.data+pool.size
+            // printf("last block?%p\n", next);
+            return;
+        }
         *(size_t *)current += size;
         DEBUG("merged block");
         next = next + size;
@@ -53,9 +61,13 @@ void mergeBlocks(char *current) {
     }
 }
 
-static inline void *insertHeader(pool_t pool, size_t header){
-    char *current = pool.data;
-    while (current < pool.data + pool.size) {
+static inline void *insertHeader(pool_t *pool, size_t header) {
+    if (!pool) return (NULL);
+    char *current = pool->data;
+    int safeIndex = 0; // 67
+    while (current < pool->data + pool->size) {
+        safeIndex++;
+        if (safeIndex > 5) return (DEBUG("merge safeIndex"),NULL);
         bool is_used = *(size_t *)current & 1;
         if (!is_used) {
             mergeBlocks(current);
@@ -64,10 +76,12 @@ static inline void *insertHeader(pool_t pool, size_t header){
 
         // If the block is used or the size available is too small.
         if (is_used || size < header) {
-            DEBUG("block skip"); // 67
+            DEBUG("block skip");
             current += size;
-            if (size == 0) // if it's the last block?
+            if (size == 0) { // if it's the last block?
+                DEBUG("ohoh problemo");
                 return NULL;
+            }
         } else {
             size_t spaceLeft = size;
             size = header | 1;
@@ -83,30 +97,48 @@ static inline void *insertHeader(pool_t pool, size_t header){
     // "realloc" the pool to make more space
     return (NULL);
 }
-static pool_t tinyPool;
+
+pool_t *poolLast(pool_t *pool) {
+    if (!pool) return (NULL);
+
+    while (pool->next) {
+        pool = pool->next;
+    }
+    return (pool);
+}
+
+int poolAddBack(pool_t **pool, size_t size) {
+    pool_t *new = initPool(size);
+    if (new == NULL) return (0);
+    DEBUG("new pool");
+
+    if (!*pool){
+        *pool = new;
+    }else {
+        poolLast(*pool)->next = new;
+    }
+    return (1);
+}
+
+static pool_t *tinyPool;
 
 void *ft_malloc(size_t size) {
     if (size == 0)
         return (NULL);
 
-    size_t realSize = ALIGN(size + sizeof(size_t));
+    pool_t **currentPool = NULL;
     void *pointer = NULL;
-    if (realSize <= 128) {//should add more pools for different sizes
-        int safeIndex = 0;
-        while (!pointer) {
-            safeIndex++;
-            if (safeIndex > 5) {
-                DEBUG("⚠️ AVORTING!");
-                return (NULL);
-            }
+    size_t realSize = ALIGN(size + sizeof(size_t));
 
-            if (!tinyPool.size) {
-                DEBUG("new pool");
-                tinyPool.size = PAGESIZE;
-                tinyPool.data = initPool(PAGESIZE); // should take ptr to pool and size as arguments
-            }
-            pointer = insertHeader(tinyPool, realSize);
-        }
+    // selecting the best pool for size
+    if (realSize <= 128) {//should add more pools for different sizes
+        currentPool = &tinyPool;
+    }
+
+    pointer = insertHeader(*currentPool, realSize);
+    if (!pointer) {
+        poolAddBack(currentPool, 256);
+        pointer = insertHeader(poolLast(*currentPool), realSize);
     }
 
     return (pointer);
@@ -119,22 +151,29 @@ void ft_free(void *ptr) {
 }
 
 void ft_show_alloc_mem() {
-    printf("TINY : %p\n", tinyPool.data);
-    char *current = tinyPool.data;
-    while (current < tinyPool.data + tinyPool.size) {
-        size_t size = (*(size_t *)current >> 3) << 3;
-        bool is_used = *(size_t *)current & 1;
-
-        if (is_used) {
-            printf("%p - %p : %ld bytes (used)\n", current, current + size, size);
-            current += size;
-        } else {
-            if (size> 0) {
-                printf("%p - %p : %ld bytes (unused)\n", current, current + size, size);
-                current += size;
-            } else
-                break;
+    pool_t *currentPool = tinyPool;
+    printf(GREEN "TINY : %p\n" WHITE, currentPool);
+    short pageIndex = 0;
+    while (currentPool) {
+        char *currentBlock = tinyPool->data;
+        printf(YELLOW "PAGE %d:\n" WHITE, pageIndex);
+        while (currentBlock < tinyPool->data + tinyPool->size) {
+            size_t size = (*(size_t *)currentBlock >> 3) << 3;
+            bool is_used = *(size_t *)currentBlock & 1;
+    
+            if (is_used) {
+                printf("\t%p - %p : %ld bytes (used)\n", currentBlock, currentBlock + size, size);
+                currentBlock += size;
+            } else {
+                if (size> 0) {
+                    printf("\t%p - %p : %ld bytes (unused)\n", currentBlock, currentBlock + size, size);
+                    currentBlock += size;
+                } else
+                    break;
+            }
         }
+        currentPool = currentPool->next;
+        pageIndex++;
     }
     // print the memory as hex dump
     // for (size_t i = 0; i < tinyPool.size; i++) {

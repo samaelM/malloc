@@ -82,17 +82,26 @@
 //         ft_free(ptr1);
 
 //     }
+//     printf(GREEN FLASH "IF YOU SEE THIS MESSAGE I THINK IT'S GOOD!\n" WHITE);
 // 	return (0);
 // }
 
 
 int main() {
+    printf("ptr1: allocating 120 bytes\n");
     char *ptr1 = ft_malloc(120);
+    ft_show_alloc_mem();
+    printf("ptr2: allocating 120 bytes\n");
     char *ptr2 = ft_malloc(120);
+    ft_show_alloc_mem();
+    printf("ptr3: allocating 120 bytes\n");
     char *ptr3 = ft_malloc(120);
     ft_show_alloc_mem();
+    printf("ptr1: free\n");
     if(ptr1) ft_free(ptr1);
+    printf("ptr2: free\n");
     if(ptr2) ft_free(ptr2);
+    printf("ptr3: free\n");
     if(ptr3) ft_free(ptr3);
     ft_show_alloc_mem();
     return 0;
