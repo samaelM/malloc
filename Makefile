@@ -3,7 +3,7 @@ ifeq ($(HOSTTYPE),)
 endif
 
 NAME			:=	libft_malloc_$(HOSTTYPE).so
-CC				:=	clang
+CC				:=	gcc
 AR				:=	ar rcs
 FLAGS			:=	-Werror -Wall -Wextra -g3 -c -Iinclude
 
@@ -36,6 +36,6 @@ fclean: clean
 re: fclean all
 
 test: $(NAME)
-	cc main.c -L. -lft_malloc_x86_64_Linux -Ilibft -Iinclude -l:libft/libft.a
+	cc main.c -L. -lft_malloc_x86_64_Linux -Ilibft -Iinclude
 
 .PHONY: all clean fclean re test

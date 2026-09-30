@@ -39,8 +39,7 @@ static inline pool_t *initPool(size_t size) {
     memory->size = size - sizeof(size_t) - sizeof(pool_t *);
     printf("final pool size=%ld\n", memory->size);
     memory->next = NULL;
-    //
-    *(size_t *)memory->data = size;
+    *(size_t *)memory->data = size - sizeof(size_t) - sizeof(pool_t *);
     return (memory);
 }
 
@@ -64,8 +63,8 @@ void mergeBlocks(char *current) {
 static inline void *insertHeader(pool_t *pool, size_t header) {
     if (!pool) return (NULL);
     char *current = pool->data;
-    int safeIndex = 0; // 67
-    while (current < pool->data + pool->size) {
+    int safeIndex = 0;
+    while (current < pool->data + pool->size) { // 67
         safeIndex++;
         if (safeIndex > 5) return (DEBUG("merge safeIndex"),NULL);
         bool is_used = *(size_t *)current & 1;
@@ -94,7 +93,6 @@ static inline void *insertHeader(pool_t *pool, size_t header) {
         }
     }
     DEBUG("not enough space in pool");
-    // "realloc" the pool to make more space
     return (NULL);
 }
 
@@ -120,24 +118,34 @@ int poolAddBack(pool_t **pool, size_t size) {
     return (1);
 }
 
-static pool_t *tinyPool;
+static pool_t *tinyPool; // from 0 to 1024
+static pool_t *smallPool; // from 1024 to 16k
+
+static pool_t *largePool; // from 16k to infinite (one block per page)
 
 void *ft_malloc(size_t size) {
     if (size == 0)
         return (NULL);
 
-    pool_t **currentPool = NULL;
-    void *pointer = NULL;
+    pool_t **currentPool;
+    void *pointer;
     size_t realSize = ALIGN(size + sizeof(size_t));
+    size_t poolSize = PAGESIZE;
 
     // selecting the best pool for size
-    if (realSize <= 128) {//should add more pools for different sizes
-        currentPool = &tinyPool;
+    if (realSize <= 1024) currentPool = &tinyPool;
+    else if (realSize <= 160384) {
+        currentPool = &smallPool;
+        poolSize = 16 * PAGESIZE;
+    } else {
+        currentPool = &largePool;
+        poolSize = realSize + sizeof(pool_t *) + sizeof(size_t);
     }
 
+    // insert the header in the pools
     pointer = insertHeader(*currentPool, realSize);
     if (!pointer) {
-        poolAddBack(currentPool, 256);
+        poolAddBack(currentPool, poolSize);
         pointer = insertHeader(poolLast(*currentPool), realSize);
     }
 
@@ -145,19 +153,30 @@ void *ft_malloc(size_t size) {
 }
 
 void ft_free(void *ptr) {
+    if (!ptr) return;
     DEBUG("memory freed");
-    *(size_t *)(ptr - sizeof(size_t))-=1;
-    // if pool is empty, munmap it
+    // get the memory block position (with header)
+    void *memoryBlock = ptr - sizeof(size_t);
+
+    // fliping the is_used flag
+    *(size_t *)memoryBlock -= 1;
+
+    // if pool page is empty, munmap it, and don't break the chain
+
+    // get the size of the block
+    // size_t size = (*(size_t *)memoryBlock >> 3) << 3;
+    // find the owner of the pointer
+
 }
 
-void ft_show_alloc_mem() {
-    pool_t *currentPool = tinyPool;
-    printf(GREEN "TINY : %p\n" WHITE, currentPool);
+void printPool(pool_t *pool, char *name) {
+    pool_t *currentPool = pool;
+    printf(GREEN "%s : %p\n" WHITE, name, currentPool);
     short pageIndex = 0;
     while (currentPool) {
-        char *currentBlock = tinyPool->data;
-        printf(YELLOW "PAGE %d:\n" WHITE, pageIndex);
-        while (currentBlock < tinyPool->data + tinyPool->size) {
+        char *currentBlock = currentPool->data;
+        printf(YELLOW "PAGE %d: %ld bytes\n" WHITE, pageIndex, currentPool->size);
+        while (currentBlock < currentPool->data + currentPool->size) {
             size_t size = (*(size_t *)currentBlock >> 3) << 3;
             bool is_used = *(size_t *)currentBlock & 1;
     
@@ -175,11 +194,18 @@ void ft_show_alloc_mem() {
         currentPool = currentPool->next;
         pageIndex++;
     }
-    // print the memory as hex dump
-    // for (size_t i = 0; i < tinyPool.size; i++) {
-    //     if (i % 16 == 0)
-    //         printf("\n%p: ", tinyPool.data + i);
-    //     printf("%02x ", (unsigned char)tinyPool.data[i]);
-    // }
     printf("\n");
 }
+
+void ft_show_alloc_mem() {
+    printPool(tinyPool, "TINY");
+    printPool(smallPool, "SMALL");
+    printPool(largePool, "LARGE");
+}
+
+// print the memory as hex dump
+// for (size_t i = 0; i < tinyPool.size; i++) {
+//     if (i % 16 == 0)
+//         printf("\n%p: ", tinyPool.data + i);
+//     printf("%02x ", (unsigned char)tinyPool.data[i]);
+// }

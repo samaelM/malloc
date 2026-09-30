@@ -94,8 +94,9 @@ int main() {
     printf("ptr2: allocating 120 bytes\n");
     char *ptr2 = ft_malloc(120);
     ft_show_alloc_mem();
-    printf("ptr3: allocating 120 bytes\n");
-    char *ptr3 = ft_malloc(120);
+    printf("ptr3: allocating 1024 bytes\n");
+    char *ptr3 = ft_malloc(1024);
+    printf("pointer 3: %p\n", ptr3);
     ft_show_alloc_mem();
     printf("ptr1: free\n");
     if(ptr1) ft_free(ptr1);
