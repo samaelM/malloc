@@ -4,16 +4,19 @@ endif
 
 NAME			:=	libft_malloc_$(HOSTTYPE).so
 CC				:=	gcc
-AR				:=	ar rcs
-FLAGS			:=	-Werror -Wall -Wextra -g3 -c -Iinclude
+FLAGS			:=	-Werror -Wall -Wextra -g3 -c -Iinclude -MMD -MP
 
 
 OBJS_DIR		:=	objs
 
-SRCS			:=	malloc.c \
+SRCS			:=	malloc.c	\
+					free.c		\
+					mutils.c	\
+					pools.c	\
 
-OBJS			:=	$(OBJS_DIR)/$(SRCS:%.c=%.o)
+OBJS			:=	$(SRCS:%.c=$(OBJS_DIR)/%.o)
 
+DEPS			:=	$(OBJS:%.o=%.d)
 
 # RULES
 all: $(NAME)
@@ -25,13 +28,15 @@ $(OBJS_DIR)/%.o: srcs/%.c
 	@mkdir -p $(OBJS_DIR)
 	$(CC) $(FLAGS) -fPIC $< -o $@
 
+-include $(DEPS)
+
 clean:
 	rm -f $(NAME)
 	rm -f a.out
 
 fclean: clean
 	rm -rf $(OBJS_DIR)
-	make -C libft/ fclean
+# 	make -C libft/ fclean
 
 re: fclean all
 
