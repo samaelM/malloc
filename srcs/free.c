@@ -7,12 +7,13 @@ void ft_free(void *ptr) {
     void        *memoryBlock = GET_BLOCK(ptr);
 
     // fliping the is_used flag
-    *(size_t *)memoryBlock -= 1;
+    *(size_t *)memoryBlock ^= 1;
 
-    // if pool page is empty, munmap it, and don't break the chain
 
-    // get the size of the block to get pool
-    // size_t size = (*(size_t *)memoryBlock >> 3) << 3;
-    // find the owner of the pointer
+    pool_t **currentPool = findPool(GET_SIZE(memoryBlock));
+    pool_t *currentPage = findPage(*currentPool, memoryBlock);
+    if (isEmptyPage(currentPage)) {
+        deletePage(currentPool, currentPage);
+    }
 
 }

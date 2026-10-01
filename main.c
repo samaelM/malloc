@@ -102,6 +102,7 @@ int main() {
     if(ptr1) ft_free(ptr1);
     printf("ptr2: free\n");
     if(ptr2) ft_free(ptr2);
+    ft_show_alloc_mem();
     printf("ptr3: free\n");
     if(ptr3) ft_free(ptr3);
     ft_show_alloc_mem();

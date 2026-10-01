@@ -21,20 +21,85 @@ static pool_t *initPool(const size_t size) {
     return (memory);
 }
 
-static void mergeBlocks(char *current) {
+pool_t **findPool(size_t size) {
+    if (size <= TINY_POOL_ACCEPT) {
+        return (&tinyPool);
+    } else if (size <= SMALL_POOL_ACCEPT) {
+        return (&smallPool);
+    } else {
+        return (&largePool);
+    }
+}
+
+bool isEmptyPage(pool_t *pool) {
+    if (!pool) return (FALSE);
+    char        *current = pool->data;
     size_t      size = GET_SIZE(current);
     char        *next = current + size;
     bool        is_used_next = GET_FLAG(next);
 
     while (!is_used_next) {
         size = GET_SIZE(next);
-        if (size == 0) { // if it's the last block?// remplacer par next == pool.data+pool.size
-            // printf("last block?%p\n", next);
+        DEBUG("unused block");
+        next = next + size;
+        if (next >= pool->data+pool->size) {
+            return (TRUE);
+        }
+        is_used_next = GET_FLAG(next);
+    }
+
+    // printf("%p (%ld bytes) is used\n", next, size);
+    return (FALSE);
+}
+
+pool_t *findPage(pool_t *pool, void *addr) {
+    while (addr < (void *)pool || addr > (void *)(pool->data+pool->size)) {
+        pool = pool->next;
+        if (pool->next == NULL) return (NULL);
+    }
+
+    return (pool);
+}
+
+void deletePage(pool_t **pool, pool_t *page) {
+    if (!pool) return;
+
+    if (*pool == page) {
+        pool_t *bad = *pool;
+        *pool = bad->next;
+        DEBUG("deleting page");
+        munmap(bad, bad->size + 16);
+
+        return;
+    }
+
+    pool_t *current = *pool;
+    while (current->next){
+        if (current->next == page) {
+            pool_t *bad = current->next;
+            current->next = bad->next;
+            DEBUG("deleting page");
+            munmap(bad, bad->size + 16);
+
             return;
         }
+    }
+    printf(FLASH RED "SOMETHING WENT BAD\n" WHITE);
+}
+
+static void mergeBlocks(char *current, pool_t *pool) {
+    size_t      size = GET_SIZE(current);
+    char        *next = current + size;
+    bool        is_used_next = GET_FLAG(next);
+
+    while (!is_used_next) {
+        size = GET_SIZE(next);
         *(size_t *)current += size;
         DEBUG("merged block");
         next = next + size;
+        if (next >= pool->data+pool->size) {
+            return;
+        }
         is_used_next = GET_FLAG(next);
     }
 }
@@ -46,10 +111,10 @@ void *insertBlockPool(pool_t *pool, const size_t header) {
 
     while (current < pool->data + pool->size) {
         safeIndex++;
-        if (safeIndex > 5) return (DEBUG("merge safeIndex"),NULL);
+        if (safeIndex > 5) return (NULL);
         bool    is_used = GET_FLAG(current);
         if (!is_used) {
-            mergeBlocks(current);
+            mergeBlocks(current, pool);
         }
         size_t  size = GET_SIZE(current);
 

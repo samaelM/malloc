@@ -4,7 +4,7 @@ extern pool_t *tinyPool;
 
 void printPool(const pool_t *pool, const char *name){
     const pool_t    *currentPool = pool;
-    printf(GREEN "%s : %p\n" WHITE, name, currentPool);
+    printf(GREEN "%s : %p - %p\n" WHITE, name, currentPool, (currentPool?currentPool->data+currentPool->size: NULL));
     short       pageIndex = 0;
 
     while (currentPool) {
