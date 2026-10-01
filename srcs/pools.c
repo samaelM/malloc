@@ -35,17 +35,16 @@ bool isEmptyPage(pool_t *pool) {
     if (!pool) return (FALSE);
     char        *current = pool->data;
     size_t      size = GET_SIZE(current);
-    char        *next = current + size;
-    bool        is_used_next = GET_FLAG(next);
+    bool        is_used = GET_FLAG(current);
 
-    while (!is_used_next) {
-        size = GET_SIZE(next);
+    while (!is_used) {
         DEBUG("unused block");
-        next = next + size;
-        if (next >= pool->data+pool->size) {
+        size = GET_SIZE(current);
+        current = current + size;
+        if (current >= pool->data+pool->size) {
             return (TRUE);
         }
-        is_used_next = GET_FLAG(next);
+        is_used = GET_FLAG(current);
     }
 
     // printf("%p (%ld bytes) is used\n", next, size);
@@ -90,6 +89,7 @@ void deletePage(pool_t **pool, pool_t *page) {
 static void mergeBlocks(char *current, pool_t *pool) {
     size_t      size = GET_SIZE(current);
     char        *next = current + size;
+    if (!next || next >= pool->data+pool->size) return;
     bool        is_used_next = GET_FLAG(next);
 
     while (!is_used_next) {
