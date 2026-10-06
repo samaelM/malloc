@@ -19,11 +19,11 @@ void printPool(const pool_t *pool, const char *name){
                 printf("\t%p - %p : %ld bytes (used)\n", currentBlock, currentBlock + size, size);
                 currentBlock += size;
             } else {
-                if (size> 0) {
-                    printf("\t%p - %p : %ld bytes (unused)\n", currentBlock, currentBlock + size, size);
-                    currentBlock += size;
-                } else
+                printf("\t%p - %p : %ld bytes (unused)\n", currentBlock, currentBlock + size, size);
+                currentBlock += size;
+                if (size == 0) {
                     break;
+                }
             }
         }
         currentPool = currentPool->next;

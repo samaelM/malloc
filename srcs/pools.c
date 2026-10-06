@@ -86,7 +86,7 @@ void deletePage(pool_t **pool, pool_t *page) {
     printf(FLASH RED "SOMETHING WENT BAD\n" WHITE);
 }
 
-static void mergeBlocks(char *current, pool_t *pool) {
+void mergeBlocks(char *current, pool_t *pool) {
     size_t      size = GET_SIZE(current);
     char        *next = current + size;
     if (!next || next >= pool->data+pool->size) return;
@@ -139,6 +139,22 @@ void *insertBlockPool(pool_t *pool, const size_t header) {
     }
     DEBUG("not enough space in pool");
     return (NULL);
+}
+
+void *insertBlockPoolHinted(pool_t *pool, const size_t header, void *hint) {
+    if (!pool)      return (NULL);
+    if (!hint)      return (NULL);
+    if (!header)    return (NULL);
+
+    void    *nextBlock  = NEXT_BLOCK(hint);
+    size_t  next_size   = GET_SIZE(nextBlock);
+    size_t  spaceLeft   = next_size + GET_SIZE(hint);
+    if (spaceLeft > header) {
+        *(size_t *)(hint + header) = spaceLeft - header;
+    }
+    *(size_t *)hint = header | 1;
+
+    return hint;
 }
 
 pool_t *poolLast(pool_t *pool) {

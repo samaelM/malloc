@@ -10,6 +10,7 @@ FLAGS			:=	-Werror -Wall -Wextra -g3 -c -Iinclude -MMD -MP
 OBJS_DIR		:=	objs
 
 SRCS			:=	malloc.c	\
+					realloc.c		\
 					free.c		\
 					mutils.c	\
 					pools.c	\

@@ -5,7 +5,6 @@ void ft_free(void *ptr) {
     DEBUG("memory freed");
     // get the memory block position (with header)
     void        *memoryBlock = GET_BLOCK(ptr);
-    printf("free -> %p\n", memoryBlock);
 
     // fliping the is_used flag
     *(size_t *)memoryBlock ^= 1;

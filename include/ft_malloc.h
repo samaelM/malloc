@@ -14,13 +14,16 @@
 #   include <stdio.h>
 #   include <curses.h>
 
-#   define DEBUG(str)           printf("%sDEBUG:%s %s\n", YELLOW, WHITE, str)
-// #   define DEBUG(str)           // switch to this one to disable debug prints
+// #   define DEBUG(str)           printf("%sDEBUG:%s %s\n", YELLOW, WHITE, str)
+#   define DEBUG(str)           // switch to this one to disable debug prints
+
 #   define ALIGN(size)          (((size) + 15) & ~15)
 #   define GET_SIZE(ptr)        ((*(size_t *)ptr >> 3) << 3)
 #   define GET_FLAG(ptr)        (*(size_t *)ptr & 1)
 #   define GET_BLOCK(ptr)       (ptr - sizeof(size_t))
+#   define GET_PTR(ptr)         (ptr + sizeof(size_t))
 #   define FLAG_FLIP(number)    (number ^ 1)
+#   define NEXT_BLOCK(ptr) ptr + GET_SIZE(ptr)
 
 #   define PAGESIZE             sysconf(_SC_PAGE_SIZE)
 #   define TINY_POOL_SIZE       PAGESIZE
@@ -48,19 +51,21 @@ extern pool_t   *smallPool;     // from 1024 to 16k
 extern pool_t   *largePool;     // from 16k to infinite (one block per page)
 
 // POOL MANIPULATION
-void *insertBlockPool(pool_t *pool, const size_t header);
-int poolAddBack(pool_t **pool, const size_t size);
-pool_t *poolLast(pool_t *pool);
-pool_t **findPool(size_t size);
-void deletePage(pool_t **pool, pool_t *page);
-pool_t *findPage(pool_t *pool, void *addr);
-bool isEmptyPage(pool_t *pool);
-pool_t **findPool(size_t size);
+void    *insertBlockPool(pool_t *pool, const size_t header);
+int     poolAddBack(pool_t **pool, const size_t size);
+pool_t  *poolLast(pool_t *pool);
+pool_t  **findPool(size_t size);
+void    deletePage(pool_t **pool, pool_t *page);
+pool_t  *findPage(pool_t *pool, void *addr);
+bool    isEmptyPage(pool_t *pool);
+pool_t  **findPool(size_t size);
+void    mergeBlocks(char *current, pool_t *pool);
+void    *insertBlockPoolHinted(pool_t *pool, const size_t header, void *hint);
 
 // ALLOCATION
 void    ft_free(void *ptr);
 void    *ft_malloc(size_t size);
-void    *realloc(void *ptr, size_t size);
+void    *ft_realloc(void *ptr, size_t size);
 void    ft_show_alloc_mem();
 
 #endif
