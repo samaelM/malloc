@@ -14,9 +14,10 @@ static pool_t *initPool(const size_t size) {
         return (NULL);
     }
 
-    memory->size = size - sizeof(size_t) - sizeof(pool_t *);
+    size_t realSize = size - sizeof(size_t) - sizeof(pool_t *) - 8;
+    memory->size = realSize;
     memory->next = NULL;
-    *(size_t *)memory->data = size - sizeof(size_t) - sizeof(pool_t *);
+    *(size_t *)memory->data = realSize;
 
     return (memory);
 }
@@ -47,7 +48,6 @@ bool isEmptyPage(pool_t *pool) {
         is_used = GET_FLAG(current);
     }
 
-    // printf("%p (%ld bytes) is used\n", next, size);
     return (FALSE);
 }
 
@@ -81,7 +81,7 @@ void deletePage(pool_t **pool, pool_t *page) {
             munmap(bad, bad->size + 16);
 
             return;
-        }
+        } else break;
     }
     printf(FLASH RED "SOMETHING WENT BAD\n" WHITE);
 }
@@ -92,62 +92,92 @@ void mergeBlocks(char *current, pool_t *pool) {
     if (!next || next >= pool->data+pool->size) return;
     bool        is_used_next = GET_FLAG(next);
 
+    int safeIndex = 0;
     while (!is_used_next) {
         size = GET_SIZE(next);
         *(size_t *)current += size;
         DEBUG("merged block");
         next = next + size;
-        if (next >= pool->data+pool->size) {
+        if (next >= pool->data + pool->size) {
             return;
         }
         is_used_next = GET_FLAG(next);
+        safeIndex++;
+        if (safeIndex > 50) {
+            DEBUG("problemo");
+            ft_show_alloc_mem();
+            return;
+        }
     }
 }
 
 void *insertBlockPool(pool_t *pool, const size_t header) {
-    if (!pool) return (NULL);
-    char        *current = pool->data;
-    int         safeIndex = 0;
+    if (!pool){
+        DEBUG("no pool?");
+        return (NULL);
+    }
+    pool_t      *currentPage = pool;
 
-    while (current < pool->data + pool->size) {
-        safeIndex++;
-        if (safeIndex > 5) return (NULL);
-        bool    is_used = GET_FLAG(current);
-        if (!is_used) {
-            mergeBlocks(current, pool);
-        }
-        size_t  size = GET_SIZE(current);
+    while (42) {
+        char        *currentBlock = currentPage->data;
+        int         safeIndex = 0;
+        while (currentBlock < currentPage->data + currentPage->size) {
+            safeIndex++;
+            if (safeIndex > 50) {
+                DEBUG("Breaked due to safe index");
+                return (NULL);
+            }
+            bool    is_used = GET_FLAG(currentBlock);
+            if (!is_used) {
+                mergeBlocks(currentBlock, currentPage);
+            }
+            size_t  size = GET_SIZE(currentBlock);
 
-        // If the block is used or the size available is too small.
-        if (is_used || size < header) {
-            DEBUG("block skip");
-            current += size;
-            if (size == 0) { // if it's the last block?
-                DEBUG("ohoh problemo");
-                return NULL;
+            // If the block is used or the size available is too small.
+            if (is_used || size < header) {
+                // DEBUG("block skip");
+                currentBlock += size;
+                if (size == 0) { // if it's the last block?
+                    DEBUG("ohoh problemo");
+                    return NULL;
+                }
+            } else {
+                size_t  spaceLeft = size;
+                size = header | 1;
+                if (spaceLeft > header) {
+                    *(size_t *)(currentBlock + header) = spaceLeft - header;
+                }
+                *(size_t *)currentBlock = size;
+                DEBUG("found space");
+                if (size <= 0 || size > 100000) {
+                    printf("size of %p is wrong (%ld)\n", currentBlock, size);
+                    ft_show_alloc_mem();
+                }
+                return (currentBlock + sizeof(size_t));
             }
-        } else {
-            size_t  spaceLeft = size;
-            size = header | 1;
-            if (spaceLeft > header) {
-                *(size_t *)(current + header) = spaceLeft - header;
-            }
-            *(size_t *)current = size;
-            DEBUG("found space");
-            return (current + sizeof(size_t));
         }
+        currentPage = currentPage->next;
+        if (!currentPage) {
+            DEBUG("no more page");
+            return (NULL);
+        }
+        DEBUG("NEXT PAGE");
     }
     DEBUG("not enough space in pool");
     return (NULL);
 }
 
-void *insertBlockPoolHinted(pool_t *pool, const size_t header, void *hint) {
+void *insertBlockPageHinted(pool_t *pool, const size_t header, void *hint) {
     if (!pool)      return (NULL);
     if (!hint)      return (NULL);
     if (!header)    return (NULL);
 
     void    *nextBlock  = NEXT_BLOCK(hint);
     size_t  next_size   = GET_SIZE(nextBlock);
+    if (next_size <= 0 || next_size > 100000) {
+        printf("nextSize of %p is wrong (%ld)\n", nextBlock, next_size);
+        ft_show_alloc_mem();
+    }
     size_t  spaceLeft   = next_size + GET_SIZE(hint);
     if (spaceLeft > header) {
         *(size_t *)(hint + header) = spaceLeft - header;

@@ -2,58 +2,56 @@
 
 
 void    *ft_realloc(void *ptr, size_t size) {
+    DEBUG("--- entering realloc ---");
     if (!ptr) {
-        // DEBUG("realloc fail 1");
         void *new = ft_malloc(size);
-        return new;
+
+        return (new);
     }
 
-    // get the memory block position (with header)
     void        *memoryBlock = GET_BLOCK(ptr);
-
     pool_t      **currentPool = findPool(GET_SIZE(memoryBlock));
-    if (currentPool == &largePool) {
-        // DEBUG("realloc fail 2");
-        return NULL;
-    }
+
+    if (currentPool == &largePool) return (NULL);
     pool_t      *currentPage = findPage(*currentPool, memoryBlock);
+
     if (!currentPage) {
-        // DEBUG("realloc fail 3");
         void *new = ft_malloc(size);
         memcpy(new, ptr, GET_SIZE(memoryBlock) - sizeof(size_t));
         ft_free(ptr);
-        return new;
+
+        return (new);
     }
 
-    //last block
     if ((void *)(currentPage->data + currentPage->size) <= memoryBlock + GET_SIZE(memoryBlock)) {
-        // DEBUG("realloc fail 4");
         void *new = ft_malloc(size);
         memcpy(new, ptr, GET_SIZE(memoryBlock) - sizeof(size_t));
         ft_free(ptr);
-        return new;
+
+        return (new);
     }
-    void        *nextBlock   = NEXT_BLOCK(memoryBlock);
-    bool        nextIs_used = GET_FLAG(nextBlock);
+
+    void        *nextBlock      = NEXT_BLOCK(memoryBlock);
+    bool        nextIs_used     = GET_FLAG(nextBlock);
+
     if (nextIs_used) {
-        // DEBUG("realloc fail 5");
         void *new = ft_malloc(size);
         memcpy(new, ptr, GET_SIZE(memoryBlock) - sizeof(size_t));
         ft_free(ptr);
-        return new;
+        return (new);
     }
 
     mergeBlocks(nextBlock, currentPage);
+
     if (GET_SIZE(nextBlock) + GET_SIZE(memoryBlock) >= ALIGN(size + sizeof(size_t))) {
-        // ft_free(ptr);
-        // printf("previous size = %ld, new size= %ld\n", GET_SIZE(memoryBlock), ALIGN(size + sizeof(size_t)));
-        insertBlockPoolHinted(currentPage, ALIGN(size + sizeof(size_t)), memoryBlock);
-        return ptr;
+        insertBlockPageHinted(currentPage, ALIGN(size + sizeof(size_t)), memoryBlock);
+        return (ptr);
     }
-    // DEBUG("realloc fail 6");
+
     void *new = ft_malloc(size);
     memcpy(new, ptr, GET_SIZE(memoryBlock) - sizeof(size_t));
     ft_free(ptr);
+
     return new;
 }
 

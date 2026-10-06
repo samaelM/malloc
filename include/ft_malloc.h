@@ -13,9 +13,27 @@
 #   include <unistd.h>
 #   include <stdio.h>
 #   include <curses.h>
+#include <stddef.h>
+#include <stdalign.h>
 
-// #   define DEBUG(str)           printf("%sDEBUG:%s %s\n", YELLOW, WHITE, str)
-#   define DEBUG(str)           // switch to this one to disable debug prints
+#   define RED                  ""
+#   define GREEN                ""
+#   define YELLOW               ""
+#   define WHITE                ""
+#   define BOLD                 ""
+#   define FLASH               ""
+#   define RETURN               ""
+
+// #   define RED                  "\033[0;31m"
+// #   define GREEN                "\033[0;32m"
+// #   define YELLOW               "\033[0;33m"
+// #   define WHITE                "\033[0m"
+// #   define BOLD                 "\033[1m"
+// #   define FLASH                "\033[6m"
+// #   define RETURN               "\033[2K\r"
+
+#   define DEBUG(str)           printf( "%s: %sDEBUG:%s %s\n", __func__, YELLOW, WHITE, str)
+// #   define DEBUG(str)           // switch to this one to disable debug prints
 
 #   define ALIGN(size)          (((size) + 15) & ~15)
 #   define GET_SIZE(ptr)        ((*(size_t *)ptr >> 3) << 3)
@@ -23,7 +41,7 @@
 #   define GET_BLOCK(ptr)       (ptr - sizeof(size_t))
 #   define GET_PTR(ptr)         (ptr + sizeof(size_t))
 #   define FLAG_FLIP(number)    (number ^ 1)
-#   define NEXT_BLOCK(ptr) ptr + GET_SIZE(ptr)
+#   define NEXT_BLOCK(ptr)      (ptr + GET_SIZE(ptr))
 
 #   define PAGESIZE             sysconf(_SC_PAGE_SIZE)
 #   define TINY_POOL_SIZE       PAGESIZE
@@ -31,17 +49,10 @@
 #   define SMALL_POOL_SIZE      16 * PAGESIZE
 #   define SMALL_POOL_ACCEPT    160384
 
-#   define RED                  "\033[0;31m"
-#   define GREEN                "\033[0;32m"
-#   define YELLOW               "\033[0;33m"
-#   define WHITE                "\033[0m"
-#   define BOLD                 "\033[1m"
-#   define FLASH                "\033[6m"
-#   define RETURN               "\033[2K\r"
-
 typedef struct t_pool {
     size_t          size;
     struct t_pool   *next;
+    char            _pad[8];    // padding to make data "aligned - 8"
     char            data[];
 }   pool_t;
 
@@ -60,7 +71,7 @@ pool_t  *findPage(pool_t *pool, void *addr);
 bool    isEmptyPage(pool_t *pool);
 pool_t  **findPool(size_t size);
 void    mergeBlocks(char *current, pool_t *pool);
-void    *insertBlockPoolHinted(pool_t *pool, const size_t header, void *hint);
+void    *insertBlockPageHinted(pool_t *pool, const size_t header, void *hint);
 
 // ALLOCATION
 void    ft_free(void *ptr);

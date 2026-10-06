@@ -16,10 +16,13 @@ void printPool(const pool_t *pool, const char *name){
             const bool      is_used = GET_FLAG(currentBlock);
     
             if (is_used) {
-                printf("\t%p - %p : %ld bytes (used)\n", currentBlock, currentBlock + size, size);
+                if (size <= 0 || size >100000) {
+                    printf("bizarre->");
+                }
+                printf("\t%p - %p : %lu bytes (used)\n", currentBlock, currentBlock + size, size);
                 currentBlock += size;
             } else {
-                printf("\t%p - %p : %ld bytes (unused)\n", currentBlock, currentBlock + size, size);
+                printf("\t%p - %p : %lu bytes (unused)\n", currentBlock, currentBlock + size, size);
                 currentBlock += size;
                 if (size == 0) {
                     break;

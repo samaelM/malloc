@@ -42,6 +42,6 @@ fclean: clean
 re: fclean all
 
 test: $(NAME)
-	cc main.c -L. -lft_malloc_x86_64_Linux -Ilibft -Iinclude
+	cc main.c -L. -lft_malloc_x86_64_Linux -Ilibft -Iinclude -g3
 
 .PHONY: all clean fclean re test
