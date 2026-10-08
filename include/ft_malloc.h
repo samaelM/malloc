@@ -48,6 +48,7 @@
 #   define TINY_POOL_ACCEPT     1024
 #   define SMALL_POOL_SIZE      16 * PAGESIZE
 #   define SMALL_POOL_ACCEPT    160384
+#   define MIN_SPLIT_SIZE (sizeof(size_t) + 16)
 
 typedef struct t_pool {
     size_t          size;

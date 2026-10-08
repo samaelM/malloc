@@ -18,7 +18,7 @@ void *ft_malloc(size_t size) {
     currentPool = findPool(realSize);
     if (currentPool == &tinyPool)       poolSize = TINY_POOL_SIZE;
     else if (currentPool == &smallPool) poolSize = SMALL_POOL_SIZE;
-    else if (currentPool == &smallPool) poolSize = realSize + sizeof(pool_t *) + sizeof(size_t);
+    else if (currentPool == &largePool) poolSize = realSize + sizeof(pool_t *) + sizeof(size_t);
 
     // insert the header in the pools
     pointer = insertBlockPool(*currentPool, realSize);

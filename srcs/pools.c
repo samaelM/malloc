@@ -56,7 +56,7 @@ bool isEmptyPage(pool_t *pool) {
 pool_t *findPage(pool_t *pool, void *addr) {
     while (addr < (void *)pool || addr > (void *)(pool->data+pool->size)) {
         pool = pool->next;
-        if (pool->next == NULL) return (NULL);
+        if (pool == NULL) return (NULL);
     }
 
     return (pool);
