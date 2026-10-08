@@ -10,7 +10,6 @@ void ft_free(void *ptr) {
     if (!currentPage) return;
 
     *(size_t *)memoryBlock      ^= 1;
-    DEBUG("memory freed");
 
     if (isEmptyPage(currentPage)) {
         deletePage(currentPool, currentPage);

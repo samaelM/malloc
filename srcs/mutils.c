@@ -41,9 +41,3 @@ void ft_show_alloc_mem() {
     printPool(largePool, "LARGE");
 }
 
-// print the memory as hex dump
-// for (size_t i = 0; i < tinyPool.size; i++) {
-//     if (i % 16 == 0)
-//         printf("\n%p: ", tinyPool.data + i);
-//     printf("%02x ", (unsigned char)tinyPool.data[i]);
-// }

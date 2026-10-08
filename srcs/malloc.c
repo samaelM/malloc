@@ -5,9 +5,7 @@ pool_t   *smallPool;     // from 1024 to 16k
 pool_t   *largePool;     // from 16k to infinite (one block per page)
 
 void *ft_malloc(size_t size) {
-    DEBUG("--- entering malloc ---");
-    if (size == 0)
-        return (NULL);
+    if (size == 0) return (NULL);
 
     pool_t          **currentPool;
     void            *pointer;
@@ -25,9 +23,7 @@ void *ft_malloc(size_t size) {
     if (!pointer) {
         poolAddBack(currentPool, poolSize);
         pointer = insertBlockPool(poolLast(*currentPool), realSize);
-        // ft_show_alloc_mem();
     }
 
-    DEBUG("--- leaving malloc ---\n");
     return (pointer);
 }
