@@ -32,8 +32,8 @@
 // #   define FLASH                "\033[6m"
 // #   define RETURN               "\033[2K\r"
 
-#   define DEBUG(str)           printf( "%s: %sDEBUG:%s %s\n", __func__, YELLOW, WHITE, str)
-// #   define DEBUG(str)           // switch to this one to disable debug prints
+// #   define DEBUG(str)           printf( "%s: %sDEBUG:%s %s\n", __func__, YELLOW, WHITE, str)
+#   define DEBUG(str)           // switch to this one to disable debug prints
 
 #   define ALIGN(size)          (((size) + 15) & ~15)
 #   define GET_SIZE(ptr)        ((*(size_t *)ptr >> 3) << 3)

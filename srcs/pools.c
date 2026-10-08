@@ -39,15 +39,17 @@ bool isEmptyPage(pool_t *pool) {
     bool        is_used = GET_FLAG(current);
 
     while (!is_used) {
-        DEBUG("unused block");
+        // DEBUG("unused block");
         size = GET_SIZE(current);
         current = current + size;
         if (current >= pool->data+pool->size) {
+            DEBUG("empty page");
             return (TRUE);
         }
         is_used = GET_FLAG(current);
     }
 
+    DEBUG("not empty page");
     return (FALSE);
 }
 
@@ -81,7 +83,8 @@ void deletePage(pool_t **pool, pool_t *page) {
             munmap(bad, bad->size + 16);
 
             return;
-        } else break;
+        }
+        current = current->next;
     }
     printf(FLASH RED "SOMETHING WENT BAD\n" WHITE);
 }

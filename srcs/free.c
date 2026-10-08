@@ -1,6 +1,7 @@
 #include <ft_malloc.h>
 
 void ft_free(void *ptr) {
+    printf("freeing :%p\n", ptr);
     if (!ptr) return;
     
     void        *memoryBlock    =  GET_BLOCK(ptr);
