@@ -1,7 +1,8 @@
 #include <ft_malloc.h>
 
-void ft_free(void *ptr) {
+void free(void *ptr) {
     if (!ptr) return;
+    printf("free : %p\n", GET_BLOCK(ptr));
     
     void        *memoryBlock    =  GET_BLOCK(ptr);
     pool_t      **currentPool   =  findPool(GET_SIZE(memoryBlock));

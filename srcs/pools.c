@@ -21,11 +21,11 @@ static pool_t *initPool(const size_t size) {
 
 pool_t **findPool(size_t size) {
     if (size <= TINY_POOL_ACCEPT) {
-        return (&tinyPool);
+        return (&g_pools.tinyPool);
     } else if (size <= SMALL_POOL_ACCEPT) {
-        return (&smallPool);
+        return (&g_pools.smallPool);
     } else {
-        return (&largePool);
+        return (&g_pools.largePool);
     }
 }
 

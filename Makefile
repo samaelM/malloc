@@ -6,6 +6,7 @@ NAME			:=	libft_malloc_$(HOSTTYPE).so
 CC				:=	gcc
 FLAGS			:=	-Werror -Wall -Wextra -g3 -c -Iinclude -MMD -MP
 
+LIBFT			:=	libft/libft.a
 
 OBJS_DIR		:=	objs
 
@@ -22,12 +23,15 @@ DEPS			:=	$(OBJS:%.o=%.d)
 # RULES
 all: $(NAME)
 
-$(NAME): $(OBJS)
-	$(CC) -shared -o $(NAME) $(OBJS)
+$(NAME): $(LIBFT) $(OBJS)
+	$(CC) -shared -o $(NAME) $(OBJS) $(LIBFT)
 
 $(OBJS_DIR)/%.o: srcs/%.c
 	@mkdir -p $(OBJS_DIR)
 	$(CC) $(FLAGS) -fPIC $< -o $@
+
+$(LIBFT):
+	@make -s -C libft/ bonus
 
 -include $(DEPS)
 
@@ -37,7 +41,7 @@ clean:
 
 fclean: clean
 	rm -rf $(OBJS_DIR)
-# 	make -C libft/ fclean
+	@make -C libft/ fclean
 
 re: fclean all
 

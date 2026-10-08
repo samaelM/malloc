@@ -1,7 +1,5 @@
 #include <ft_malloc.h>
 
-extern pool_t *tinyPool;
-
 void printPool(const pool_t *pool, const char *name){
     const pool_t    *currentPool = pool;
     printf(GREEN "%s : %p - %p\n" WHITE, name, currentPool, (currentPool?currentPool->data+currentPool->size: NULL));
@@ -16,13 +14,10 @@ void printPool(const pool_t *pool, const char *name){
             const bool      is_used = GET_FLAG(currentBlock);
     
             if (is_used) {
-                if (size <= 0 || size >100000) {
-                    printf("bizarre->");
-                }
-                printf("\t%p - %p : %lu bytes (used)\n", currentBlock, currentBlock + size, size);
+                printf("\t%p - %p : %lu bytes\t(used)\n", currentBlock, currentBlock + size, size);
                 currentBlock += size;
             } else {
-                printf("\t%p - %p : %lu bytes (unused)\n", currentBlock, currentBlock + size, size);
+                printf("\t%p - %p : %lu bytes\t(unused)\n", currentBlock, currentBlock + size, size);
                 currentBlock += size;
                 if (size == 0) {
                     break;
@@ -35,9 +30,9 @@ void printPool(const pool_t *pool, const char *name){
     printf("\n");
 }
 
-void ft_show_alloc_mem() {
-    printPool(tinyPool, "TINY");
-    printPool(smallPool, "SMALL");
-    printPool(largePool, "LARGE");
+void show_alloc_mem() {
+    printPool(g_pools.tinyPool, "TINY");
+    printPool(g_pools.smallPool, "SMALL");
+    printPool(g_pools.largePool, "LARGE");
 }
 

@@ -1,6 +1,8 @@
 #ifndef FT_MALLOC_42
 #   define FT_MALLOC_42
 
+#   include "../libft/libft.h"
+
 #   include <stddef.h>
 #   include <stdlib.h>
 #   include <unistd.h>
@@ -13,24 +15,14 @@
 #   include <unistd.h>
 #   include <stdio.h>
 #   include <curses.h>
-#include <stddef.h>
-#include <stdalign.h>
 
-#   define RED                  ""
-#   define GREEN                ""
-#   define YELLOW               ""
-#   define WHITE                ""
-#   define BOLD                 ""
-#   define FLASH               ""
-#   define RETURN               ""
-
-// #   define RED                  "\033[0;31m"
-// #   define GREEN                "\033[0;32m"
-// #   define YELLOW               "\033[0;33m"
-// #   define WHITE                "\033[0m"
-// #   define BOLD                 "\033[1m"
-// #   define FLASH                "\033[6m"
-// #   define RETURN               "\033[2K\r"
+#   define RED                  "\033[0;31m"
+#   define GREEN                "\033[0;32m"
+#   define YELLOW               "\033[0;33m"
+#   define WHITE                "\033[0m"
+#   define BOLD                 "\033[1m"
+#   define FLASH                "\033[6m"
+#   define RETURN               "\033[2K\r"
 
 // #   define DEBUG(str)           printf( "%s: %sDEBUG:%s %s\n", __func__, YELLOW, WHITE, str)
 #   define DEBUG(str)           // switch to this one to disable debug prints
@@ -57,10 +49,14 @@ typedef struct t_pool {
     char            data[];
 }   pool_t;
 
+typedef struct t_global_pool {
+    pool_t   *tinyPool;      // from 0 to 1024
+    pool_t   *smallPool;     // from 1024 to 16k
+    pool_t   *largePool;     // from 16k to infinite (one block per page)
+}   gPool_t;
+
 // POOLS
-extern pool_t   *tinyPool;      // from 0 to 1024
-extern pool_t   *smallPool;     // from 1024 to 16k
-extern pool_t   *largePool;     // from 16k to infinite (one block per page)
+extern gPool_t g_pools;
 
 // POOL MANIPULATION
 void    *insertBlockPool(pool_t *pool, const size_t header);
@@ -75,9 +71,9 @@ void    mergeBlocks(char *current, pool_t *pool);
 void    *insertBlockPageHinted(pool_t *pool, const size_t header, void *hint);
 
 // ALLOCATION
-void    ft_free(void *ptr);
-void    *ft_malloc(size_t size);
-void    *ft_realloc(void *ptr, size_t size);
-void    ft_show_alloc_mem();
+void    free(void *ptr);
+void    *malloc(size_t size);
+void    *realloc(void *ptr, size_t size);
+void    show_alloc_mem();
 
 #endif

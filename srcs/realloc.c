@@ -1,10 +1,10 @@
 #include <ft_malloc.h>
 
-void *ft_realloc(void *ptr, size_t size) {
-    if (!ptr) return ft_malloc(size);
+void *realloc(void *ptr, size_t size) {
+    if (!ptr) return malloc(size);
 
     if (size == 0) {
-        ft_free(ptr);
+        free(ptr);
         return NULL;
     }
 
@@ -17,12 +17,12 @@ void *ft_realloc(void *ptr, size_t size) {
         return ptr;
     }
 
-    void *new = ft_malloc(size);
+    void *new = malloc(size);
     if (!new) return NULL;
 
     size_t len = oldSize < size ? oldSize : size;
     memcpy(new, ptr, len);
-    ft_free(ptr);
+    free(ptr);
 
     return new;
 }
