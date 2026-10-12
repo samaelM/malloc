@@ -71,6 +71,6 @@ fclean: clean
 re: fclean all
 
 test: $(NAME)
-	cc main.c -L. -lft_malloc -Iinclude -g3
+	cc main.c -L. -lft_malloc -Iinclude -g3 -o test
 
 .PHONY: all clean fclean re test
