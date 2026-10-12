@@ -43,7 +43,7 @@ Feel free() to switch my libft with yours if you have one.
 
 <h2>Resources</h2>
 
-- 
+- https://levelup.gitconnected.com/malloc-from-scratch-dbc1bc23dfde
 
 <h5>AI USAGE</h5>
 
