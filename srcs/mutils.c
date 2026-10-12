@@ -36,3 +36,34 @@ void show_alloc_mem() {
     printPool(g_pools.largePool, "LARGE");
 }
 
+
+// size_t  ft_ltoa_hexa_size(unsigned long long nb)
+// {
+//     size_t  lenght;
+//     lenght = 0;
+//     while (nb > 0) {
+//         nb /= 16;
+//         lenght++;
+//     }
+//     return (lenght);
+// }
+
+// size_t ft_printPointer(char *dest, void *n) {
+//     size_t              index;
+//     size_t              lenght;
+//     unsigned long long  num;
+
+//     if (n == 0) return (ft_strlcpy(dest, "0", 2));
+
+//     num = (unsigned long long)n;
+//     lenght = ft_ltoa_hexa_size(num);
+//     index = lenght;
+//     dest[index--] = '\0';
+//     while (num > 0) {
+//         dest[index] = "0123456789abcdef"[(num % 16)];
+//         num /= 16;
+//         index--;
+//     }
+
+//     return (lenght);
+// }
